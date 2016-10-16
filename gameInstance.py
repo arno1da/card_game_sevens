@@ -1,16 +1,17 @@
 import random
-import itertools
+from itertools import product, cycle
+# import functools
 
 # hand = random.sample(self.deck, 5)
 
 #Start simulation with two players
 
-class newDeck(object):
-	def __init__(self, players, strategyDict):
+class NewDeck(object):
+	def __init__(self, players):
 		self.players = players
 		self.suits = 'cdhs'
 		self.ranks = '23456789TJQKA'
-		self.deck = tuple(''.join(card) for card in itertools.product(self.ranks, self.suits))
+		self.deck = tuple(''.join(card) for card in product(self.ranks, self.suits))
 
 		self.rounds = [
 		  {
@@ -23,14 +24,17 @@ class newDeck(object):
 			, "trick": 'faceup'
 			, "name": 'second round'
 		  }
-		 , {
-			"cards": 3
-			, "trick": 'faceup'
-			, "name" : 'third round'
-
-		  }
 		]
+
+		self.scoreCard = self.generateScoreCard(players)
+		self.dealerGenerator = cycle(self.scoreCard.keys())
 		pass
+
+	def generateScoreCard(self, players):
+		scoreCard = {}
+		for player in range(players):
+			scoreCard[player] = []
+		return scoreCard
 
 	def drawCards(self, cards):
 		return random.sample(self.deck, cards)
@@ -62,15 +66,30 @@ class newDeck(object):
 	the same amount of cards)
 	'''
 	def biddingRound(self, choices, cards):
+		print("hurr, durr, I'm arnold")
 		pass
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:
 			return scoreCard
 		gameRound = roundsLeft.pop(0)
+		print("about to start game round")
+		print(gameRound)
+		dealer = next(self.dealerGenerator)
+		print("here is our dealer")
+		print(dealer)
 
 
+
+	def initiateGame(self, strategy):
+		self.runGame(self.rounds, self.players, self.scoreCard)
 		pass
 
 if __name__ == "__main__":
+	def basicStrategy(cards, players, scoreCard):
+		return 
+
+
+	newDeck = NewDeck(players=2)
+	newDeck.initiateGame(basicStrategy)
 	pass

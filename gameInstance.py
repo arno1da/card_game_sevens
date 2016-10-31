@@ -33,7 +33,9 @@ class NewDeck(object):
 	def generateScoreCard(self, players):
 		scoreCard = {}
 		for player in range(players):
-			scoreCard[player] = []
+			scoreCard[player + 1] = []
+		print("here iso ur score card")
+		print(scoreCard)
 		return scoreCard
 
 	def drawCards(self, cards):
@@ -60,6 +62,23 @@ class NewDeck(object):
 
 		return boardState
 
+	#Generator returning the players turn.
+	def turnCycle(playerList, startingPoint=None):
+		startingPOint = 0 if startingPOint is None else playerList.index(startingPoint)
+		while True:
+			yield playerList[startingPoint]
+			startingPoint = (startingPoint + 1) % len(playerList)
+
+	def submitBids(self, bidRounds, dealer, turnCycle playersStrategies):
+		playersTurn = next(turnCycle)
+		if (playersTurn == dealer):
+			self.submitBid(playersStrategies[dealer].bid(bidRounds), self.players, bidRounds)
+			return bidRounds;
+		else:
+			self.submitBid(playersStrategies[playersTurn].bid(bidRounds), self.players, bidRounds)
+			return submitBids(self, bidRounds, dealer, playersStrategies)
+
+
 	'''During the bidding round each player can bid as much as possible
 	however the final player can not bid such that the sum of the previous
 	bids is equal to amount of cards in each players hand. (note all players will have
@@ -73,11 +92,13 @@ class NewDeck(object):
 		if len(roundsLeft) == 0:
 			return scoreCard
 		gameRound = roundsLeft.pop(0)
+		print(self.players)
 		print("about to start game round")
 		print(gameRound)
 		dealer = next(self.dealerGenerator)
 		print("here is our dealer")
 		print(dealer)
+
 
 
 

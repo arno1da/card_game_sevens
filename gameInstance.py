@@ -2,6 +2,7 @@ import random
 from itertools import product, cycle
 from pprint import pprint
 from functools import reduce
+from copy import deepcopy
 # import functools
 
 # hand = random.sample(self.deck, 5)
@@ -87,7 +88,7 @@ class NewDeck(object):
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
 				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
-				bidResults[player] = maximumDealerBid - currentTotalBids + 2 
+				bidResults[player] = maximumDealerBid - currentTotalBids + 2
 				#Should default to +1 for action.
 			else:
 				bidResults[player] = strategyResult
@@ -96,9 +97,30 @@ class NewDeck(object):
 			bidResults[player] = strategyResult
 			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
-	def playoutRound(self, currentHand, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle):
+	def determinePlayChoices(self, cards, trick, leadingCard=None):
+		if not leadingCard:
+			return deepcopy(cards)
+		else:
+			sameSuit = map(lambda x: x[-1] == leadingCard[-1], cards)
+			if (len(sameSuit) == 0):
+				return deepcopy(cards)
+			else:
+				return sameSuit
+
+	def determineWinner(self, stack, trick, endingPlayer, totalPlayers):
+		pass
+
+
+	def playoutRound(self, currentHand, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle, leadingCard=None):
 		currentPlayer = next(turnCycle)
-		playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'])
+
+		playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'], leadingCard)
+
+		if len(playerChoices) == 1:
+			playedCard = playerChoices[0]
+		else:
+			playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'], playerChoices)
+
 
 		currentHand.append(playedCard)
 		boardState[currentPlayer].remove(playedCard)
@@ -109,10 +131,13 @@ class NewDeck(object):
 			if len(boardState[currentPlayer]) == 0:
 				return roundResults
 			else:
+				#Reset current hand
+				roundResults[]
+				currentHand = []
 				#play with a lead
 		else:
 			#we need to continue the round
-			self.playoutRound()
+			self.playoutRound(currentHand)
 
 
 	def runGame(self, roundsLeft, players, scoreCard):
@@ -140,7 +165,7 @@ class NewDeck(object):
 
 		#create another generator set
 		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
-	
+
 
 	def initiateGame(self):
 		self.runGame(self.rounds, self.players, self.scoreCard)
@@ -158,7 +183,7 @@ if __name__ == "__main__":
 		print(cards)
 		return 1
 
-	def basicPlayStrategy(roundResults, cards, trick):
+	def basicPlayStrategy(roundResults, cards, trick, playerChoices):
 		return
 
 

@@ -7,7 +7,8 @@ from itertools import product, cycle
 #Start simulation with two players
 
 class NewDeck(object):
-	def __init__(self, players):
+	def __init__(self, players, playerStrategies):
+		self.playerStrategies = playerStrategies
 		self.players = players
 		self.suits = 'cdhs'
 		self.ranks = '23456789TJQKA'
@@ -48,35 +49,46 @@ class NewDeck(object):
 		return hand
 
 	def dealHand(self, gameRound, players):
-		
 		boardState = {}
 		if (gameRound['trick'] == 'faceup'):
-			cardSample = drawCards(gameRound['cards'] * int(players) + 1)
+			cardSample = self.drawCards(gameRound['cards'] * int(players) + 1)
 			boardState['trick'] = cardSample.pop()
 			for i in range(players):
-				boardState['player' + str(i)] = self.popCards(gameRound['cards'], cardSample)
+				boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
 		else:
-			drawCards(gameRound['cards'] * int(players))
+			cardSample = self.drawCards(gameRound['cards'] * int(players))
 			for i in range(players):
-				boardState['player' + str(i)] = self.popCards(gameRound['cards'], cardSample)
+				boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
 
 		return boardState
 
+	def submitBid(self, strategyResult, bidResults, player, maximumDealerBid, dealerIndicator=False):
+		print("here is our mapped out current bids!")
+		allCurrentBidsArray = map(lambda x: bidResults[x], bidResults.keys())
+		print(allCurrentBidsArray)
+		if dealerIndicator == True:
+			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
+			if (strategyResult + currentTotalBids) == maximumDealerBid:
+				print("[ERROR]: Invalid strategy bid result.")
+				#Should default to +1 for action.
+		else:
+			bidResults[player] = strategyResult
+
+
 	#Generator returning the players turn.
-	def turnCycle(playerList, startingPoint=None):
-		startingPOint = 0 if startingPOint is None else playerList.index(startingPoint)
+	def turnCycle(self,playerList, startingPoint):
 		while True:
 			yield playerList[startingPoint]
 			startingPoint = (startingPoint + 1) % len(playerList)
 
-	def submitBids(self, bidRounds, dealer, turnCycle playersStrategies):
+	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
 		playersTurn = next(turnCycle)
 		if (playersTurn == dealer):
-			self.submitBid(playersStrategies[dealer].bid(bidRounds), self.players, bidRounds)
-			return bidRounds;
+			self.submitBid(playersStrategies[dealer].bid(bidResults, boardState[dealer]), bidResults, dealer, maximumDealerBid, True)
+			return bidResults;
 		else:
-			self.submitBid(playersStrategies[playersTurn].bid(bidRounds), self.players, bidRounds)
-			return submitBids(self, bidRounds, dealer, playersStrategies)
+			self.submitBid(playersStrategies[playersTurn].bid(bidResults, boardState[playersTurn]), bidResults, playersTurn, maximumDealerBid)
+			return self.submitBids(self, bidResults, dealer, playersStrategies)
 
 
 	'''During the bidding round each player can bid as much as possible
@@ -85,7 +97,7 @@ class NewDeck(object):
 	the same amount of cards)
 	'''
 	def biddingRound(self, choices, cards):
-		print("hurr, durr, I'm arnold")
+		# print("hurr, durr, I'm arnold")
 		pass
 
 	def runGame(self, roundsLeft, players, scoreCard):
@@ -99,18 +111,58 @@ class NewDeck(object):
 		print("here is our dealer")
 		print(dealer)
 
+		boardState = self.dealHand(gameRound, self.players)
+		print("here is our board state")
+		print(boardState)
+
+		print(self.scoreCard.keys())
+
+		#List starting with index 0 shift the entire list by 1.
+		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
+
+		maximumDealerBid = gameRound["cards"]
+		betResults = submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
+
+		print("here is our new bet generator")
+		print(next(newBetGenerator))
+		print(next(newBetGenerator))
+
+		# bidRound = submitBids({}, dealer, self.turnCycle, self.playersStrategies)
 
 
-
-	def initiateGame(self, strategy):
+	def initiateGame(self):
 		self.runGame(self.rounds, self.players, self.scoreCard)
-		pass
+
 
 if __name__ == "__main__":
 	def basicStrategy(cards, players, scoreCard):
-		return 
+		return
+
+	def basicBidStrategy():
+		return
+
+	def basicPlayStrategy():
+		return
 
 
-	newDeck = NewDeck(players=2)
-	newDeck.initiateGame(basicStrategy)
+	newDeck = NewDeck(
+		players=3
+		, playerStrategies={
+			1: {
+				"bid": basicBidStrategy,
+				"play": basicPlayStrategy
+			},
+
+			2: {
+				"bid": basicBidStrategy,
+				"play": basicPlayStrategy
+			},
+
+			3: {
+				"bid": basicBidStrategy,
+				"play": basicPlayStrategy
+			}
+		}
+		)
+	newDeck.initiateGame()
 	pass

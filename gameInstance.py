@@ -65,15 +65,16 @@ class NewDeck(object):
 		return boardState
 
 	def submitBid(self, strategyResult, bidResults, player, maximumDealerBid, dealerIndicator=False):
-		print("here is our mapped out current bids!")
-		allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
-		# print(allCurrentBidsArray[0])
-		pprint(allCurrentBidsArray)
+		
 		if dealerIndicator == True:
+			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
-				print("[ERROR]: Invalid strategy bid result.")
+				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
+				bidResults[player] = maximumDealerBid - currentTotalBids + 2 
 				#Should default to +1 for action.
+			else:
+				bidResults[player] = strategyResult
 		else:
 			bidResults[player] = strategyResult
 
@@ -85,7 +86,11 @@ class NewDeck(object):
 			startingPoint = (startingPoint + 1) % len(playerList)
 
 	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
+		print("here are our bid results so far")
+		print(bidResults)
 		playersTurn = next(turnCycle)
+		print("here is our players turn")
+		print(playersTurn)
 		if (playersTurn == dealer):
 			self.submitBid(playersStrategies[dealer]['bid'](bidResults, boardState[dealer]), bidResults, dealer, maximumDealerBid, True)
 			return bidResults;
@@ -120,7 +125,7 @@ class NewDeck(object):
 
 
 		#List starting with index 0 shift the entire list by 1.
-		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer) % len(self.scoreCard.keys())) - 1)
+		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 
 		maximumDealerBid = gameRound["cards"]
 		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)

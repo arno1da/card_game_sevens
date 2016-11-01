@@ -1,5 +1,7 @@
 import random
 from itertools import product, cycle
+from pprint import pprint
+from functools import reduce
 # import functools
 
 # hand = random.sample(self.deck, 5)
@@ -64,8 +66,9 @@ class NewDeck(object):
 
 	def submitBid(self, strategyResult, bidResults, player, maximumDealerBid, dealerIndicator=False):
 		print("here is our mapped out current bids!")
-		allCurrentBidsArray = map(lambda x: bidResults[x], bidResults.keys())
-		print(allCurrentBidsArray)
+		allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
+		# print(allCurrentBidsArray[0])
+		pprint(allCurrentBidsArray)
 		if dealerIndicator == True:
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
@@ -84,11 +87,11 @@ class NewDeck(object):
 	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
 		playersTurn = next(turnCycle)
 		if (playersTurn == dealer):
-			self.submitBid(playersStrategies[dealer].bid(bidResults, boardState[dealer]), bidResults, dealer, maximumDealerBid, True)
+			self.submitBid(playersStrategies[dealer]['bid'](bidResults, boardState[dealer]), bidResults, dealer, maximumDealerBid, True)
 			return bidResults;
 		else:
-			self.submitBid(playersStrategies[playersTurn].bid(bidResults, boardState[playersTurn]), bidResults, playersTurn, maximumDealerBid)
-			return self.submitBids(self, bidResults, dealer, playersStrategies)
+			self.submitBid(playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn]), bidResults, playersTurn, maximumDealerBid)
+			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
 
 	'''During the bidding round each player can bid as much as possible
@@ -115,17 +118,17 @@ class NewDeck(object):
 		print("here is our board state")
 		print(boardState)
 
-		print(self.scoreCard.keys())
 
 		#List starting with index 0 shift the entire list by 1.
-		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
+		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer) % len(self.scoreCard.keys())) - 1)
 
 		maximumDealerBid = gameRound["cards"]
-		betResults = submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
+		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
 
-		print("here is our new bet generator")
-		print(next(newBetGenerator))
-		print(next(newBetGenerator))
+		print("here are our bid results")
+		print(bidResults)
+
+
 
 		# bidRound = submitBids({}, dealer, self.turnCycle, self.playersStrategies)
 
@@ -138,8 +141,13 @@ if __name__ == "__main__":
 	def basicStrategy(cards, players, scoreCard):
 		return
 
-	def basicBidStrategy():
-		return
+	def basicBidStrategy(currentBids, cards):
+		print("here are our current bids")
+		print(currentBids)
+
+		print("here are our cards")
+		print(cards)
+		return 1
 
 	def basicPlayStrategy():
 		return

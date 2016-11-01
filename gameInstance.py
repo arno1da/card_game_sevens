@@ -133,7 +133,7 @@ class NewDeck(object):
 			highestLeadingCardSuit = reduce(lambda x, y: x["card"][-1] == leadingCard[-1] and cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x, stack)
 			return highestLeadingCardSuit
 
-	def playoutRound(self, currentHand, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle, leadingCard=None):
+	def playoutRound(self, currentHandStack, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle, leadingCard=None):
 		currentPlayer = next(turnCycle)
 
 		playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'], leadingCard)
@@ -143,7 +143,7 @@ class NewDeck(object):
 		else:
 			playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'], playerChoices)
 
-		currentHand.append({
+		currentHandStack.append({
 			"player": currentPlayer
 			, "card": playedCard})
 		boardState[currentPlayer].remove(playedCard)
@@ -154,14 +154,18 @@ class NewDeck(object):
 			if len(boardState[currentPlayer]) == 0:
 				return roundResults
 			else:
-				self.determineWinner(currentHand, boardState['trick'], self.cardRanks)
+				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
+				roundResults[winningPlay["player"]].append(roundResults)
+
+				self.playoutRound(currentHandStack, roundResults, currentPlayer, playersStrategies, boardState, turnCycle)
+
 				#Reset current hand
 				# roundResults[]
 				# currentHand = []
 				#play with a lead
 		else:
 			#we need to continue the round
-			self.playoutRound(currentHand)
+			self.playoutRound(currentHandStack)
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:
@@ -186,9 +190,13 @@ class NewDeck(object):
 		print("here are our bid results")
 		print(bidResults)
 
+
 		#create another generator set
 		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 
+		roundResults = {}
+		for i in self.scoreCard.keys():
+			roundResults[i] = []
 
 	def initiateGame(self):
 		self.runGame(self.rounds, self.players, self.scoreCard)

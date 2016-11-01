@@ -15,6 +15,21 @@ class NewDeck(object):
 		self.players = players
 		self.suits = 'cdhs'
 		self.ranks = '23456789TJQKA'
+		self.cardRanks = {
+			 "2": 1
+			,"3": 2
+			,"4": 3
+			,"5": 4
+			,"6": 5
+			,"7": 6
+			,"8": 7
+			,"9": 8
+			,"T": 9
+			,"J": 10
+			,"Q": 11
+			,"K": 12
+			,"A": 13
+		}
 		self.deck = tuple(''.join(card) for card in product(self.ranks, self.suits))
 
 		self.rounds = [
@@ -107,9 +122,16 @@ class NewDeck(object):
 			else:
 				return sameSuit
 
-	def determineWinner(self, stack, trick, endingPlayer, totalPlayers):
-		pass
+	def determineWinner(self, stack, trick, cardRanks):
 
+		playedTricks = map(lambda x: trick[-1] == x["card"][-1], stack)
+		if (len(playedTricks) > 0):
+			highestTrick = reduce(lambda x, y: cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x , playedTricks)
+			return highestTrick
+		else:
+			leadingCard = stack[0]["card"]
+			highestLeadingCardSuit = reduce(lambda x, y: x["card"][-1] == leadingCard[-1] and cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x, stack)
+			return highestLeadingCardSuit
 
 	def playoutRound(self, currentHand, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle, leadingCard=None):
 		currentPlayer = next(turnCycle)
@@ -121,8 +143,9 @@ class NewDeck(object):
 		else:
 			playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'], playerChoices)
 
-
-		currentHand.append(playedCard)
+		currentHand.append({
+			"player": currentPlayer
+			, "card": playedCard})
 		boardState[currentPlayer].remove(playedCard)
 
 		#If current player is the player to the right of the starting player we have finished our round.
@@ -131,14 +154,14 @@ class NewDeck(object):
 			if len(boardState[currentPlayer]) == 0:
 				return roundResults
 			else:
+				self.determineWinner(currentHand, boardState['trick'], self.cardRanks)
 				#Reset current hand
-				roundResults[]
-				currentHand = []
+				# roundResults[]
+				# currentHand = []
 				#play with a lead
 		else:
 			#we need to continue the round
 			self.playoutRound(currentHand)
-
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:

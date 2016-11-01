@@ -64,21 +64,6 @@ class NewDeck(object):
 
 		return boardState
 
-	def submitBid(self, strategyResult, bidResults, player, maximumDealerBid, dealerIndicator=False):
-		
-		if dealerIndicator == True:
-			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
-			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
-			if (strategyResult + currentTotalBids) == maximumDealerBid:
-				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
-				bidResults[player] = maximumDealerBid - currentTotalBids + 2 
-				#Should default to +1 for action.
-			else:
-				bidResults[player] = strategyResult
-		else:
-			bidResults[player] = strategyResult
-
-
 	#Generator returning the players turn.
 	def turnCycle(self,playerList, startingPoint):
 		while True:
@@ -96,18 +81,38 @@ class NewDeck(object):
 		playersTurn = next(turnCycle)
 		print("here is our players turn")
 		print(playersTurn)
+		strategyResult = playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn], boardState['trick'])
 		if (playersTurn == dealer):
-			self.submitBid(playersStrategies[dealer]['bid'](bidResults, boardState[dealer], boardState['trick']), bidResults, dealer, maximumDealerBid, True)
+			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
+			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
+			if (strategyResult + currentTotalBids) == maximumDealerBid:
+				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
+				bidResults[player] = maximumDealerBid - currentTotalBids + 2 
+				#Should default to +1 for action.
+			else:
+				bidResults[player] = strategyResult
 			return bidResults;
 		else:
-			self.submitBid(playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn], boardState['trick']), bidResults, playersTurn, maximumDealerBid)
+			bidResults[player] = strategyResult
 			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
+	def playoutRound(self, currentHand, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle):
+		currentPlayer = next(turnCycle)
+		playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'])
 
-	def playoutRound(self, roundResults, leadingPlayer, playerStrategies, boardState, turnCycle):
+		currentHand.append(playedCard)
+		boardState[currentPlayer].remove(playedCard)
 
-
-		pass
+		#If current player is the player to the right of the starting player we have finished our round.
+		if (currentPlayer == ((leadingPlayer + (len(playersStrategies.keys()) - 1)) % len(playerStrategies.keys()))):
+			#If we have no cards left the game is over
+			if len(boardState[currentPlayer]) == 0:
+				return roundResults
+			else:
+				#play with a lead
+		else:
+			#we need to continue the round
+			self.playoutRound()
 
 
 	def runGame(self, roundsLeft, players, scoreCard):
@@ -125,19 +130,17 @@ class NewDeck(object):
 		print("here is our board state")
 		print(boardState)
 
-
 		#List starting with index 0 shift the entire list by 1.
 		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 
 		maximumDealerBid = gameRound["cards"]
 		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
-		# roundResults = 
-
-		#create another generator set
-		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 		print("here are our bid results")
 		print(bidResults)
 
+		#create another generator set
+		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
+	
 
 	def initiateGame(self):
 		self.runGame(self.rounds, self.players, self.scoreCard)
@@ -155,7 +158,7 @@ if __name__ == "__main__":
 		print(cards)
 		return 1
 
-	def basicPlayStrategy():
+	def basicPlayStrategy(roundResults, cards, trick):
 		return
 
 

@@ -85,6 +85,11 @@ class NewDeck(object):
 			yield playerList[startingPoint]
 			startingPoint = (startingPoint + 1) % len(playerList)
 
+	'''During the bidding round each player can bid as much as possible
+	however the final player can not bid such that the sum of the previous
+	bids is equal to amount of cards in each players hand. (note all players will have
+	the same amount of cards)
+	'''
 	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
 		print("here are our bid results so far")
 		print(bidResults)
@@ -92,21 +97,18 @@ class NewDeck(object):
 		print("here is our players turn")
 		print(playersTurn)
 		if (playersTurn == dealer):
-			self.submitBid(playersStrategies[dealer]['bid'](bidResults, boardState[dealer]), bidResults, dealer, maximumDealerBid, True)
+			self.submitBid(playersStrategies[dealer]['bid'](bidResults, boardState[dealer], boardState['trick']), bidResults, dealer, maximumDealerBid, True)
 			return bidResults;
 		else:
-			self.submitBid(playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn]), bidResults, playersTurn, maximumDealerBid)
+			self.submitBid(playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn], boardState['trick']), bidResults, playersTurn, maximumDealerBid)
 			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
 
-	'''During the bidding round each player can bid as much as possible
-	however the final player can not bid such that the sum of the previous
-	bids is equal to amount of cards in each players hand. (note all players will have
-	the same amount of cards)
-	'''
-	def biddingRound(self, choices, cards):
-		# print("hurr, durr, I'm arnold")
+	def playoutRound(self, roundResults, leadingPlayer, playerStrategies, boardState, turnCycle):
+
+
 		pass
+
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:
@@ -129,13 +131,12 @@ class NewDeck(object):
 
 		maximumDealerBid = gameRound["cards"]
 		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
+		# roundResults = 
 
+		#create another generator set
+		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 		print("here are our bid results")
 		print(bidResults)
-
-
-
-		# bidRound = submitBids({}, dealer, self.turnCycle, self.playersStrategies)
 
 
 	def initiateGame(self):
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 	def basicStrategy(cards, players, scoreCard):
 		return
 
-	def basicBidStrategy(currentBids, cards):
+	def basicBidStrategy(currentBids, cards, trick):
 		print("here are our current bids")
 		print(currentBids)
 

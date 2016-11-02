@@ -53,8 +53,6 @@ class NewDeck(object):
 		scoreCard = {}
 		for player in range(players):
 			scoreCard[player + 1] = []
-		print("here iso ur score card")
-		print(scoreCard)
 		return scoreCard
 
 	def drawCards(self, cards):
@@ -71,12 +69,11 @@ class NewDeck(object):
 		if (gameRound['trick'] == 'faceup'):
 			cardSample = self.drawCards(gameRound['cards'] * int(players) + 1)
 			boardState['trick'] = cardSample.pop()
-			for i in range(players):
-				boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
 		else:
 			cardSample = self.drawCards(gameRound['cards'] * int(players))
-			for i in range(players):
-				boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
+
+		for i in range(players):
+			boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
 
 		return boardState
 
@@ -116,27 +113,34 @@ class NewDeck(object):
 		if not leadingCard:
 			return deepcopy(cards)
 		else:
-			sameSuit = map(lambda x: x[-1] == leadingCard[-1], cards)
+			sameSuit = filter(lambda x: (x[-1] == leadingCard[-1]) and x, cards)
 			if (len(sameSuit) == 0):
 				return deepcopy(cards)
 			else:
 				return sameSuit
 
 	def determineWinner(self, stack, trick, cardRanks):
-
-		playedTricks = map(lambda x: trick[-1] == x["card"][-1], stack)
+		playedTricks = filter(lambda x: trick[-1] == x["card"][-1] and x, stack)
 		if (len(playedTricks) > 0):
 			highestTrick = reduce(lambda x, y: cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x , playedTricks)
 			return highestTrick
 		else:
 			leadingCard = stack[0]["card"]
-			highestLeadingCardSuit = reduce(lambda x, y: x["card"][-1] == leadingCard[-1] and cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x, stack)
+			def compareCards(x, y):
+				if (y["card"][-1] == leadingCard[-1] and (cardRanks[x["card"][0]] < cardRanks[y["card"][0]])):
+					return y
+				else:
+					return x
+			highestLeadingCardSuit = reduce(compareCards, stack)
 			return highestLeadingCardSuit
 
-	def playoutRound(self, currentHandStack, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle, leadingCard=None):
+	def playoutRound(self, currentHandStack, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle):
 		currentPlayer = next(turnCycle)
 
-		playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'], leadingCard)
+		if len(currentHandStack) == 0:
+			playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'])
+		else:
+			playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'], currentHandStack[0]["card"])
 
 		if len(playerChoices) == 1:
 			playedCard = playerChoices[0]
@@ -152,20 +156,17 @@ class NewDeck(object):
 		if (currentPlayer == ((leadingPlayer + (len(playersStrategies.keys()) - 1)) % len(playerStrategies.keys()))):
 			#If we have no cards left the game is over
 			if len(boardState[currentPlayer]) == 0:
+				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
+				roundResults[winningPlay["player"]].append(roundResults)
 				return roundResults
 			else:
 				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
 				roundResults[winningPlay["player"]].append(roundResults)
-
-				self.playoutRound(currentHandStack, roundResults, currentPlayer, playersStrategies, boardState, turnCycle)
-
-				#Reset current hand
-				# roundResults[]
-				# currentHand = []
-				#play with a lead
+				#Start round with empty stack
+				self.playoutRound([], roundResults, currentPlayer, playersStrategies, boardState, turnCycle)
 		else:
 			#we need to continue the round
-			self.playoutRound(currentHandStack)
+			self.playoutRound(currentHandStack, roundResults, leadingPlayer, playerStrategies, boardState, turnCycle)
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:

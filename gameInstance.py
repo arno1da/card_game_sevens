@@ -35,7 +35,7 @@ class NewDeck(object):
 		self.rounds = [
 		  {
 		  	"cards": 1
-		  	, "trick": 'faceUp'
+		  	, "trick": 'faceup'
 		  	, "name": 'first round'
 		  }
 		, {
@@ -89,24 +89,20 @@ class NewDeck(object):
 	the same amount of cards)
 	'''
 	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
-		print("here are our bid results so far")
-		print(bidResults)
 		playersTurn = next(turnCycle)
-		print("here is our players turn")
-		print(playersTurn)
 		strategyResult = playersStrategies[playersTurn]['bid'](bidResults, boardState[playersTurn], boardState['trick'])
 		if (playersTurn == dealer):
 			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
 				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
-				bidResults[player] = maximumDealerBid - currentTotalBids + 2
+				bidResults[playersTurn] = maximumDealerBid - currentTotalBids + 2
 				#Should default to +1 for action.
 			else:
-				bidResults[player] = strategyResult
+				bidResults[playersTurn] = strategyResult
 			return bidResults;
 		else:
-			bidResults[player] = strategyResult
+			bidResults[playersTurn] = strategyResult
 			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
 	def determinePlayChoices(self, cards, trick, leadingCard=None):
@@ -134,9 +130,14 @@ class NewDeck(object):
 			highestLeadingCardSuit = reduce(compareCards, stack)
 			return highestLeadingCardSuit
 
-	def playoutRound(self, currentHandStack, roundResults, leadingPlayer, playersStrategies, boardState, turnCycle):
+	def playoutRound(self, currentHandStack, roundResults, playersStrategies, boardState, turnCycle, leadingPlayer=None):
 		currentPlayer = next(turnCycle)
-
+		if not leadingPlayer:
+			leadingPlayer = currentPlayer
+		print("here is our current player")
+		print(currentPlayer)
+		print("here is our current handStack")
+		print(currentHandStack)
 		if len(currentHandStack) == 0:
 			playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'])
 		else:
@@ -153,7 +154,7 @@ class NewDeck(object):
 		boardState[currentPlayer].remove(playedCard)
 
 		#If current player is the player to the right of the starting player we have finished our round.
-		if (currentPlayer == ((leadingPlayer + (len(playersStrategies.keys()) - 1)) % len(playerStrategies.keys()))):
+		if (currentPlayer == ((leadingPlayer + (len(playersStrategies.keys()) - 1)) % len(playersStrategies.keys()))):
 			#If we have no cards left the game is over
 			if len(boardState[currentPlayer]) == 0:
 				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
@@ -163,10 +164,10 @@ class NewDeck(object):
 				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
 				roundResults[winningPlay["player"]].append(roundResults)
 				#Start round with empty stack
-				self.playoutRound([], roundResults, currentPlayer, playersStrategies, boardState, turnCycle)
+				self.playoutRound([], roundResults, playersStrategies, boardState, turnCycle)
 		else:
 			#we need to continue the round
-			self.playoutRound(currentHandStack, roundResults, leadingPlayer, playerStrategies, boardState, turnCycle)
+			self.playoutRound(currentHandStack, roundResults , playersStrategies, boardState, turnCycle, leadingPlayer)
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:
@@ -193,11 +194,17 @@ class NewDeck(object):
 
 
 		#create another generator set
-		leadingPlayer = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
+		turnCycle = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
+
 
 		roundResults = {}
 		for i in self.scoreCard.keys():
 			roundResults[i] = []
+
+		print(roundResults)
+		roundResults = self.playoutRound([], roundResults , self.playerStrategies, boardState, turnCycle)
+		print("here are our round results!")
+		print(roundResults)
 
 	def initiateGame(self):
 		self.runGame(self.rounds, self.players, self.scoreCard)
@@ -208,15 +215,26 @@ if __name__ == "__main__":
 		return
 
 	def basicBidStrategy(currentBids, cards, trick):
-		print("here are our current bids")
-		print(currentBids)
-
-		print("here are our cards")
-		print(cards)
 		return 1
 
 	def basicPlayStrategy(roundResults, cards, trick, playerChoices):
-		return
+		cardRanks = {
+			 "2": 1
+			,"3": 2
+			,"4": 3
+			,"5": 4
+			,"6": 5
+			,"7": 6
+			,"8": 7
+			,"9": 8
+			,"T": 9
+			,"J": 10
+			,"Q": 11
+			,"K": 12
+			,"A": 13
+		}
+		highestChoice = reduce(lambda x, y: cardRanks[x["card"][0]] < cardRanks[y["card"][0]] and y or x , playerChoices)
+		return highestChoice
 
 
 	newDeck = NewDeck(

@@ -339,6 +339,26 @@ if __name__ == "__main__":
 	logging.basicConfig(format='%(asctime)s %(message)s', filename='card_game_sevens.log', level=logging.WARNING)
 	logging.propagate = False
 
+	import argparse
+
+	def checkPositiveInteger(value):
+		ivalue = int(value)
+		if ivalue <= 0:
+			raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+		return ivalue
+
+	argparser = argparse.ArgumentParser(
+		usage="Simulate 'sevens' card game"
+		)
+
+	argparser.add_argument(
+		'--iterations', '-i'
+		,type=checkPositiveInteger
+		,default=10
+		)
+
+	arguments = argparser.parse_args()
+
 	def basicBidStrategy(currentBids, cards, trick):
 		return 1
 
@@ -390,4 +410,4 @@ if __name__ == "__main__":
 		}
 		)
 
-	newDeck.initiateGame(gameIterations=5)
+	newDeck.initiateGame(gameIterations=int(arguments.iterations))

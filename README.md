@@ -8,6 +8,9 @@ For example if it was round 2 (each player receives 2 cards) of a 3 player game 
 
 The next phase is the playing phase. During this phase the player who bid first will lead. The leading card's suite is the winning suite. The players will then take turns playing a single card to follow. If the player has the same suite as the leading card the player must play this suite (or a card with the same suite). This is called 'following suite'. If the player can not follow suite then any card can be played. The winner of the hand round is the player that played the highest starting suite or if tricks are present the highest trick. The player who won the round is then able to lead.
 
+For this variation the rounds up to 7 contain incremental cards starting from 1. Round 8-10 are special rounds. Round 8 there is no trick available. For round 9 the trick is face down during the bidding round and for round 10 both the players cards and trick are unknown to them. 
+
+
 h4. Functions required to enter a bot.
 
 The game currently takes two functions your bidding strategy and play strategy. The arguments are as follows:

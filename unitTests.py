@@ -4,6 +4,9 @@ from gameInstance import NewDeck
 
 class subFunctionIntegrationTest(unittest.TestCase):
 
+	def calculateGameWinner(self):
+		pass
+
 	def test_determinePlayChoices(self):
 		testCase_1 = ['3c', '4c']
 		trick = ['Tc']

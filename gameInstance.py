@@ -166,7 +166,7 @@ class NewDeck(object):
 			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
-				print("[ERROR]: Invalid strategy bid result for player #%s. Will default to +1 above maximum" % (str(playersTurn)))
+				logging.info("[ERROR]: Invalid strategy bid result for player #%s. Will default to +1 above maximum" % (str(playersTurn)))
 				bidResults[playersTurn] = maximumDealerBid - currentTotalBids + 2
 				#Should default to +1 for action.
 			else:
@@ -233,7 +233,7 @@ class NewDeck(object):
 					currentHandStack
 				)
 			if (playedCard not in playerChoices):
-				print("[ERROR]: Invalid play strategy player #%s. Will default to first choice." % (str(currentPlayer)))
+				logging.info("[ERROR]: Invalid play strategy player #%s. Will default to first choice." % (str(currentPlayer)))
 				playedCard = playerChoices[0]
 
 		currentHandStack.append({
@@ -274,7 +274,6 @@ class NewDeck(object):
 
 		#List starting with index 0 shift the entire list by 1.
 		newBetGenerator = self.turnCycle(list(scoreCard.keys()), ((dealer + 1) % len(scoreCard.keys())) - 1)
-
 		maximumDealerBid = gameRound["cards"]
 		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid, gameRound)
 
@@ -336,6 +335,9 @@ class NewDeck(object):
 
 
 if __name__ == "__main__":
+	import logging
+	logging.basicConfig(format='%(asctime)s %(message)s', filename='card_game_sevens.log', level=logging.WARNING)
+	logging.propagate = False
 
 	def basicBidStrategy(currentBids, cards, trick):
 		return 1
@@ -388,4 +390,4 @@ if __name__ == "__main__":
 		}
 		)
 
-	newDeck.initiateGame(gameIterations=50000)
+	newDeck.initiateGame(gameIterations=5)

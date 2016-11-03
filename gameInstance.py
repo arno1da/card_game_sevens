@@ -211,9 +211,7 @@ class NewDeck(object):
 			leadingPlayer = currentPlayer
 		if not endingPlayer:
 			#rule set to have the ending player on the other end of the cycle
-			if leadingPlayer == len(playersStrategies.keys()):
-				endingPlayer = 1
-			elif leadingPlayer == 1:
+			if leadingPlayer == 1:
 				endingPlayer = len(playersStrategies.keys())
 			else:
 				endingPlayer = leadingPlayer - 1
@@ -325,8 +323,6 @@ class NewDeck(object):
 			for winner in totalGameScores['game' + str(i + 1)]["winner"]:
 				totalGameWinners[winner['player']] += 1
 
-		# pprint("here is our total Game Scores")
-		# print(totalGameScores)
 		print("Final game score.")
 		pprint(totalGameWinners)
 
@@ -354,7 +350,7 @@ if __name__ == "__main__":
 	argparser.add_argument(
 		'--iterations', '-i'
 		,type=checkPositiveInteger
-		,default=10
+		,default=1
 		)
 
 	arguments = argparser.parse_args()

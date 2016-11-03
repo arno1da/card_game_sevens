@@ -152,15 +152,15 @@ class NewDeck(object):
 
 	Information changes depending on the rounds.
 	'''
-	def submitBids(self, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid, gameRound):
+	def submitBids(self, gameRound, scoreCard, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
 		playersTurn = next(turnCycle)
 
 		if (gameRound["trick"] == 'blind' or gameRound["trick"] == 'none'):
-			strategyResult = playersStrategies[playersTurn]['bid'](bidResults, deepcopy(boardState[playersTurn]), None)
+			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, deepcopy(boardState[playersTurn]), None)
 		elif (gameRound["name"] == "blind betting round"):
-			strategyResult = playersStrategies[playersTurn]['bid'](bidResults, [], None)
+			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, [], None)
 		else:
-			strategyResult = playersStrategies[playersTurn]['bid'](bidResults, deepcopy(boardState[playersTurn]), boardState['trick'])
+			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, deepcopy(boardState[playersTurn]), boardState['trick'])
 
 		if (playersTurn == dealer):
 			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
@@ -174,7 +174,7 @@ class NewDeck(object):
 			return bidResults;
 		else:
 			bidResults[playersTurn] = strategyResult
-			return self.submitBids(bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid, gameRound)
+			return self.submitBids(gameRound, scoreCard, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid)
 
 	def determinePlayChoices(self, cards, trick, leadingCard=None):
 		if not leadingCard:
@@ -273,7 +273,7 @@ class NewDeck(object):
 		#List starting with index 0 shift the entire list by 1.
 		newBetGenerator = self.turnCycle(list(scoreCard.keys()), ((dealer + 1) % len(scoreCard.keys())) - 1)
 		maximumDealerBid = gameRound["cards"]
-		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid, gameRound)
+		bidResults = self.submitBids(gameRound, scoreCard, {}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
 
 		#create another generator set
 		turnCycle = self.turnCycle(list(scoreCard.keys()), ((dealer + 1) % len(scoreCard.keys())) - 1)
@@ -355,7 +355,7 @@ if __name__ == "__main__":
 
 	arguments = argparser.parse_args()
 
-	def basicBidStrategy(currentBids, cards, trick):
+	def basicBidStrategy(gameRound, scoreCard, currentBids, cards, trick):
 		return 1
 
 	#Basic strategy of playing highest possible card

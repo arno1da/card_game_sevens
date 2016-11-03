@@ -388,4 +388,4 @@ if __name__ == "__main__":
 		}
 		)
 
-	newDeck.initiateGame(gameIterations=1000)
+	newDeck.initiateGame(gameIterations=50000)

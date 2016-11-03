@@ -3,11 +3,6 @@ from itertools import product, cycle
 from pprint import pprint
 from functools import reduce
 from copy import deepcopy
-# import functools
-
-# hand = random.sample(self.deck, 5)
-
-#Start simulation with two players
 
 class NewDeck(object):
 	def __init__(self, players, playerStrategies):
@@ -71,13 +66,28 @@ class NewDeck(object):
 			"cards": 7
 			, "trick": 'faceup'
 			, "name": 'seventh round'
+		  }
 
+		  , {
+		  	"cards": 7
+		  	, "trick": 'none'
+		  	, "name": 'eighth round'
+		  }
+
+		  , {
+		  	"cards": 7
+		  	, "trick": 'blind'
+		  	, "name": 'nineth round'
+		  }
+
+		  , {
+		  	"cards": 7
+		  	, "trick": 'blind'
+		  	, "name": 'final blind round'
 		  }
 		]
 
 		self.scoreCard = self.generateScoreCard(players)
-		self.dealerGenerator = cycle(self.scoreCard.keys())
-		pass
 
 	def generateScoreCard(self, players):
 		scoreCard = {}
@@ -128,6 +138,9 @@ class NewDeck(object):
 
 	#Generator returning the players turn.
 	def turnCycle(self,playerList, startingPoint):
+		print("here is our player list and starting point")
+		print(playerList)
+		print(startingPoint)
 		while True:
 			yield playerList[startingPoint]
 			startingPoint = (startingPoint + 1) % len(playerList)
@@ -144,7 +157,7 @@ class NewDeck(object):
 			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
 			currentTotalBids = reduce(lambda x, y: x + y , allCurrentBidsArray)
 			if (strategyResult + currentTotalBids) == maximumDealerBid:
-				print("[ERROR]: Invalid strategy bid result. Will default to +1 above maximum")
+				print("[ERROR]: Invalid strategy bid result for player #%s. Will default to +1 above maximum" % (str(playersTurn)))
 				bidResults[playersTurn] = maximumDealerBid - currentTotalBids + 2
 				#Should default to +1 for action.
 			else:
@@ -179,10 +192,14 @@ class NewDeck(object):
 			highestLeadingCardSuit = reduce(compareCards, stack)
 			return highestLeadingCardSuit
 
-	def playoutRound(self, currentHandStack, roundResults, playersStrategies, boardState, turnCycle, leadingPlayer=None):
+	def playoutRound(self, currentHandStack, roundResults, playersStrategies, boardState, turnCycle, endingPlayer=None, leadingPlayer=None):
 		currentPlayer = next(turnCycle)
-		if not leadingPlayer:
+		if not leadingPlayer or not endingPlayer:
 			leadingPlayer = currentPlayer
+			if leadingPlayer == len(playersStrategies.keys()):
+				endingPlayer = 1
+			else:
+				endingPlayer = leadingPlayer - 1
 
 		if len(currentHandStack) == 0:
 			playerChoices = self.determinePlayChoices(boardState[currentPlayer], boardState['trick'])
@@ -194,16 +211,18 @@ class NewDeck(object):
 		else:
 			playedCard = playersStrategies[currentPlayer]['play'](roundResults, boardState[currentPlayer], boardState['trick'], playerChoices, currentHandStack)
 			if (playedCard not in playerChoices):
+				print("[ERROR]: Invalid play strategy player #%s. Will default to first choice." % (str(currentPlayer)))
 				playedCard = playerChoices[0]
 
 		currentHandStack.append({
 			"player": currentPlayer
 			, "card": playedCard})
+
 		boardState[currentPlayer].remove(playedCard)
 
 		#If current player is the player to the right of the starting player we have finished our round.
-		if (currentPlayer == ((leadingPlayer + (len(playersStrategies.keys()) - 1)) % len(playersStrategies.keys()))):
-			#If we have no cards left the game is over
+		if (currentPlayer == endingPlayer):
+			#If we have no cards left the game round is over
 			if len(boardState[currentPlayer]) == 0:
 				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
 				roundResults[winningPlay["player"]].append(currentHandStack)
@@ -211,35 +230,31 @@ class NewDeck(object):
 			else:
 				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
 				roundResults[winningPlay["player"]].append(currentHandStack)
-				#Start round with empty stack
+				#Start next play round with an empty stack
 				currentHandStack = []
-				return self.playoutRound(currentHandStack, roundResults, playersStrategies, boardState, turnCycle)
+				return self.playoutRound(currentHandStack, roundResults, playersStrategies, boardState, turnCycle, endingPlayer)
 		else:
 			#we need to continue the round
-			return self.playoutRound(currentHandStack, roundResults , playersStrategies, boardState, turnCycle, leadingPlayer)
+			return self.playoutRound(currentHandStack, roundResults , playersStrategies, boardState, turnCycle, endingPlayer, leadingPlayer)
 
 	def runGame(self, roundsLeft, players, scoreCard):
 		if len(roundsLeft) == 0:
 			return scoreCard
 		gameRound = roundsLeft.pop(0)
-		print(self.players)
-		print("about to start game round")
-		print(gameRound)
-		dealer = next(self.dealerGenerator)
-		print("here is our dealer")
-		print(dealer)
+
+		determineDealer = random.randint(0, len(list(self.scoreCard.keys())) -1)
+
+		dealerGenerator = self.turnCycle(list(self.scoreCard.keys()), random.randint(1, len(list(self.scoreCard.keys()))) )
+
+		dealer = next(dealerGenerator)
 
 		boardState = self.dealHand(gameRound, players)
-		print("here is our board state")
-		print(boardState)
 
 		#List starting with index 0 shift the entire list by 1.
 		newBetGenerator = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
 
 		maximumDealerBid = gameRound["cards"]
 		bidResults = self.submitBids({}, dealer, newBetGenerator, self.playerStrategies, boardState, maximumDealerBid)
-		print("here are our bid results")
-		print(bidResults)
 
 		#create another generator set
 		turnCycle = self.turnCycle(list(self.scoreCard.keys()), ((dealer + 1) % len(self.scoreCard.keys())) - 1)
@@ -249,36 +264,51 @@ class NewDeck(object):
 			roundResults[i] = []
 
 		roundResults = self.playoutRound([], roundResults , self.playerStrategies, boardState, turnCycle)
-		print("here are our round results!")
-		print(roundResults)
 
 		scoreCard = self.calculateScore(bidResults, roundResults, scoreCard, gameRound)
 
 		return self.runGame(roundsLeft, players, scoreCard)
 
+	def calculateGameWinner(self, gameScores):
 
-	def initiateGame(self):
-		gameScore = self.runGame(self.rounds, self.players, self.scoreCard)
-		print("here is our final game score!")
-		pprint(gameScore)
+		currentWinningPlayer = {
+			"score": 0
+			,"player": 'invalid'
+		}
+		for player in gameScores.keys():
+			currentPlayerScore = reduce(lambda x, y: max(x,y), gameScores[player]['score'])
+			if (currentPlayerScore > currentWinningPlayer["score"]):
+				currentWinningPlayer = {"score":gameScores[player], "player": player}
+
+		return currentWinningPlayer
+
+
+	def initiateGame(self, gameIterations):
+
+		totalGameScores = {}
+		for i in range(gameIterations):
+			singleGameScore = self.runGame(self.rounds, self.players, self.scoreCard)
+			print(singleGameScore)
+			totalGameScores['game' + str(i + 1)] = {
+				"winner": self.calculateGameWinner(singleGameScore),
+				"scoreSheet": singleGameScore
+			}
+
+		# pprint("here is our total Game Scores")
+		# print(totalGameScores)
+
+		pprint("here is our winner!")
+		pprint(totalGameScores['game1']["winner"])
 
 
 
 if __name__ == "__main__":
-	def basicStrategy(cards, players, scoreCard):
-		return
 
 	def basicBidStrategy(currentBids, cards, trick):
 		return 1
 
 	def basicPlayStrategy(roundResults, cards, trick, playerChoices, currentRoundStack):
-		print("this is the current round stack")
-		print(currentRoundStack)
-		print("here is our player choices")
-		print(roundResults)
-		print(playerChoices)
-		print(cards)
-		print(trick)
+
 		cardRanks = {
 			 "2": 1
 			,"3": 2
@@ -302,8 +332,6 @@ if __name__ == "__main__":
 				return x
 		highestChoice = reduce(compareCards , playerChoices)
 
-		print("this is our highestChoice")
-		print(highestChoice)
 		return highestChoice
 
 
@@ -326,5 +354,5 @@ if __name__ == "__main__":
 			}
 		}
 		)
-	newDeck.initiateGame()
-	pass
+
+	newDeck.initiateGame(gameIterations=1)

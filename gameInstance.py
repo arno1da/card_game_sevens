@@ -156,11 +156,11 @@ class NewDeck(object):
 		playersTurn = next(turnCycle)
 
 		if (gameRound["trick"] == 'blind' or gameRound["trick"] == 'none'):
-			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, deepcopy(boardState[playersTurn]), None)
+			strategyResult = playersStrategies[playersTurn]['bid'](deepcopy(gameRound), deepcopy(scoreCard), deepcopy(bidResults), deepcopy(boardState[playersTurn]), None)
 		elif (gameRound["name"] == "blind betting round"):
-			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, [], None)
+			strategyResult = playersStrategies[playersTurn]['bid'](deepcopy(gameRound), deepcopy(scoreCard), deepcopy(bidResults), [], None)
 		else:
-			strategyResult = playersStrategies[playersTurn]['bid'](gameRound, scoreCard, bidResults, deepcopy(boardState[playersTurn]), boardState['trick'])
+			strategyResult = playersStrategies[playersTurn]['bid'](deepcopy(gameRound), deepcopy(scoreCard), deepcopy(bidResults), deepcopy(boardState[playersTurn]), boardState['trick'])
 
 		if (playersTurn == dealer):
 			allCurrentBidsArray = map(lambda x: bidResults[x], list(bidResults.keys()))
@@ -225,10 +225,10 @@ class NewDeck(object):
 			playedCard = playerChoices[0]
 		else:
 			playedCard = playersStrategies[currentPlayer]['play'](
-					gameRound, scoreCard,
-					roundResults, deepcopy(boardState[currentPlayer]),
-					boardState['trick'], playerChoices,
-					currentHandStack
+					deepcopy(gameRound), deepcopy(scoreCard),
+					deepcopy(roundResults), deepcopy(boardState[currentPlayer]),
+					boardState['trick'], deepcopy(playerChoices),
+					deepcopy(currentHandStack)
 				)
 			if (playedCard not in playerChoices):
 				logging.info("[ERROR]: Invalid play strategy player #%s. Will default to first choice." % (str(currentPlayer)))
@@ -326,7 +326,7 @@ class NewDeck(object):
 		print("Final game score.")
 		pprint(totalGameWinners)
 
-	
+
 
 
 

@@ -33,60 +33,60 @@ class NewDeck(object):
 		return  [
 		  {
 		  	"cards": 1
-		  	, "trick": 'faceup'
-		  	, "name": 'first round'
+		  	, "trump": "faceup"
+		  	, "name": "first round"
 		  }
 		, {
 			"cards": 2
-			, "trick": 'faceup'
-			, "name": 'second round'
+			, "trump": "faceup"
+			, "name": "second round"
 		  }
 		 , {
 			"cards": 3
-			, "trick": 'faceup'
-			, "name" : 'third round'
+			, "trump": "faceup"
+			, "name" : "third round"
 
 		  }
 		  , {
 			"cards": 4
-			, "trick": 'faceup'
-			, "name": 'fourth round'
+			, "trump": "faceup"
+			, "name": "fourth round"
 
 		  }
 		  , {
 			"cards": 5
-			, "trick": 'faceup'
-			, "name" : 'fifth round'
+			, "trump": "faceup"
+			, "name" : "fifth round"
 
 		  }
 		  , {
 			"cards": 6
-			, "trick": 'faceup'
-			, "name" : 'sixth round'
+			, "trump": "faceup"
+			, "name" : "sixth round"
 
 		  }
 		  , {
 			"cards": 7
-			, "trick": 'faceup'
-			, "name": 'seventh round'
+			, "trump": "faceup"
+			, "name": "seventh round"
 		  }
 
 		  , {
 		  	"cards": 7
-		  	, "trick": 'none'
-		  	, "name": 'eighth round'
+		  	, "trump": "none"
+		  	, "name": "eighth round"
 		  }
 
 		  , {
 		  	"cards": 7
-		  	, "trick": 'blind'
-		  	, "name": 'nineth round'
+		  	, "trump": "blind"
+		  	, "name": "nineth round"
 		  }
 
 		  , {
 		  	"cards": 7
-		  	, "trick": 'blind'
-		  	, "name": 'final blind round'
+		  	, "trump": "blind"
+		  	, "name": "final blind round"
 		  }
 		]
 
@@ -127,12 +127,12 @@ class NewDeck(object):
 
 	def dealHand(self, gameRound, players):
 		boardState = {}
-		if (gameRound['trick'] == 'faceup'):
+		if (gameRound["trump"] == 'faceup'):
 			cardSample = self.drawCards(gameRound['cards'] * int(players) + 1)
-			boardState['trick'] = cardSample.pop()
+			boardState["trump"] = cardSample.pop()
 		else:
 			cardSample = self.drawCards(gameRound['cards'] * int(players))
-			boardState['trick'] = None
+			boardState["trump"] = None
 
 		for i in range(players):
 			boardState[i + 1] = self.popCards(gameRound['cards'], cardSample)
@@ -155,7 +155,7 @@ class NewDeck(object):
 	def submitBids(self, gameRound, scoreCard, bidResults, dealer, turnCycle, playersStrategies, boardState, maximumDealerBid):
 		playersTurn = next(turnCycle)
 
-		if (gameRound["trick"] == 'blind' or gameRound["trick"] == 'none'):
+		if (gameRound["trump"] == 'blind' or gameRound["trump"] == 'none'):
 			strategyResult = playersStrategies[playersTurn]['bid'](deepcopy(gameRound), deepcopy(scoreCard), deepcopy(bidResults), deepcopy(boardState[playersTurn]), None)
 		elif (gameRound["name"] == "blind betting round"):
 			strategyResult = playersStrategies[playersTurn]['bid'](deepcopy(gameRound), deepcopy(scoreCard), deepcopy(bidResults), [], None)
@@ -217,9 +217,9 @@ class NewDeck(object):
 				endingPlayer = leadingPlayer - 1
 
 		if len(currentHandStack) == 0:
-			playerChoices = self.determinePlayChoices(deepcopy(boardState[currentPlayer]), boardState['trick'])
+			playerChoices = self.determinePlayChoices(deepcopy(boardState[currentPlayer]), boardState["trump"])
 		else:
-			playerChoices = self.determinePlayChoices(deepcopy(boardState[currentPlayer]), boardState['trick'], currentHandStack[0]["card"])
+			playerChoices = self.determinePlayChoices(deepcopy(boardState[currentPlayer]), boardState["trump"], currentHandStack[0]["card"])
 
 		if len(playerChoices) == 1:
 			playedCard = playerChoices[0]
@@ -227,7 +227,7 @@ class NewDeck(object):
 			playedCard = playersStrategies[currentPlayer]['play'](
 					deepcopy(gameRound), deepcopy(scoreCard),
 					deepcopy(roundResults), deepcopy(boardState[currentPlayer]),
-					boardState['trick'], deepcopy(playerChoices),
+					boardState["trump"], deepcopy(playerChoices),
 					deepcopy(currentHandStack)
 				)
 			if (playedCard not in playerChoices):
@@ -244,11 +244,11 @@ class NewDeck(object):
 		if (currentPlayer == endingPlayer):
 			#If we have no cards left the game round is over
 			if len(boardState[currentPlayer]) == 0:
-				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
+				winningPlay = self.determineWinner(currentHandStack, boardState["trump"], self.cardRanks)
 				roundResults[winningPlay["player"]].append(currentHandStack)
 				return roundResults
 			else:
-				winningPlay = self.determineWinner(currentHandStack, boardState['trick'], self.cardRanks)
+				winningPlay = self.determineWinner(currentHandStack, boardState["trump"], self.cardRanks)
 				roundResults[winningPlay["player"]].append(currentHandStack)
 				#Start next play round with an empty stack
 				currentHandStack = []
@@ -327,9 +327,6 @@ class NewDeck(object):
 		pprint(totalGameWinners)
 
 
-
-
-
 if __name__ == "__main__":
 	import logging
 	logging.basicConfig(format='%(asctime)s %(message)s', filename='card_game_sevens.log', level=logging.WARNING)
@@ -355,11 +352,11 @@ if __name__ == "__main__":
 
 	arguments = argparser.parse_args()
 
-	def basicBidStrategy(gameRound, scoreCard, currentBids, cards, trick):
+	def basicBidStrategy(gameRound, scoreCard, currentBids, cards, trump):
 		return 1
 
 	#Basic strategy of playing highest possible card
-	def basicPlayStrategy(gameRound, scoreCard, currentRoundResults, cards, trick, playerChoices, currentRoundStack):
+	def basicPlayStrategy(gameRound, scoreCard, currentRoundResults, cards, trump, playerChoices, currentRoundStack):
 		cardRanks = {
 			 "2": 1
 			,"3": 2

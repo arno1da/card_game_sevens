@@ -15,6 +15,6 @@ Functions required to enter a bot.
 
 The game currently takes two functions your bidding strategy and play strategy. The arguments are as follows:
 
-bidStrategy(gameRound, scoreCard, currentBids, cards, trick)
+bidStrategy(gameRound, scoreCard, currentBids, cards, trump)
 
-playStrategy(gameRound, scoreCard, currentRoundResults, cards, trick, playerChoices, currentRoundStack)
+playStrategy(gameRound, scoreCard, currentRoundResults, cards, trump, playerChoices, currentRoundStack)
